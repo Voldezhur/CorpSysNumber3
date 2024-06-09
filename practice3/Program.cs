@@ -1,6 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.VisualBasic;
+using System.Runtime.CompilerServices;
+using System.Data.Common;
 
 namespace practice2
 {
@@ -173,7 +177,7 @@ namespace practice2
 
                 Study_program study_program1 = new Study_program{program_id = 1, name_program = "Прикладная математика", department = departmentIIT, plan = 5};
                 Study_program study_program2 = new Study_program{program_id = 2, name_program = "Информатика и вычислительная техника", department = departmentIIT, plan = 5};
-                Study_program study_program3 = new Study_program{program_id = 3, name_program = "Информационные системы и технологии", department = departmentIRI, plan = 5};
+                Study_program study_program3 = new Study_program{program_id = 3, name_program = "Прикладная информатика", department = departmentIRI, plan = 5};
                 Study_program study_program4 = new Study_program{program_id = 4, name_program = "Радиотехника", department = departmentIRI, plan = 7};
                 Study_program study_program5 = new Study_program{program_id = 5, name_program = "Фундаментальная информатика и информационные технологии", department = departmentIKB, plan = 5};
                 Study_program study_program6 = new Study_program{program_id = 6, name_program = "Информационная безопасность", department = departmentIKB, plan = 5};
@@ -327,7 +331,7 @@ namespace practice2
         {
             using (ApplicationContext db = new ApplicationContext())
             {
-                Console.WriteLine($"Абитуриенты, желающие поступить на программу обучения {study_program_name}\n");
+                Console.WriteLine($"Абитуриенты, желающие поступить на программу обучения {study_program_name}:\n");
 
                 var enrolleesInStudyProgram = from pe in db.program_enrollee.ToList()
                     where pe.program?.name_program == study_program_name
@@ -345,7 +349,7 @@ namespace practice2
         {
             using (ApplicationContext db = new ApplicationContext())
             {
-                Console.WriteLine($"Программы обучения, для которых необходим предмет {required_subject}\n");
+                Console.WriteLine($"Программы обучения, для которых необходим предмет {required_subject}:\n");
 
                 var selected_study_programs = from sp in db.program.ToList()
                     where sp.subjects.Any(item => item.subject?.name_subject == required_subject)
@@ -358,14 +362,173 @@ namespace practice2
             }
         }
 
+        // Запрос 3
+        public static void query3()
+        {
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                Console.WriteLine($"Статистика каждого предмета ЕГЭ:\n");
+                
+                var subject_statistics = from s in db.subject.ToList()
+                    select new {s.name_subject, s.enrollees.Count, max_result = s.enrollees.Max(x => x.result), min_result = s.enrollees.Min(x => x.result)};
+
+                foreach (var item in subject_statistics)
+                {
+                    Console.WriteLine($"Название предмета: {item.name_subject};\nМинимальный результат: {item.min_result}\nМаксимальный результат: {item.max_result};\nКоличество сдающих: {item.Count};\n");
+                }
+            }
+        }
+
+        // Запрос 4
+        public static void query4(int min = 70)
+        {
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                Console.WriteLine($"Программы обучения, у которых минимальные баллы всех необходимых предметов больше {min}:\n");
+
+                var program_statistics = from p in db.program.ToList()
+                    where p.subjects.All(x => x.min_result > 70)
+                    select new {p.name_program, p.subjects};
+
+                foreach (var item in program_statistics)
+                {
+                    Console.WriteLine(item.name_program);
+                }
+            }
+        }
+
+        // Запрос 5
+        public static void query5()
+        {
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                Console.WriteLine($"Программа обучения с самым большим планом набора:\n");
+
+                var max_plan_program = db.program.OrderByDescending(x => x.plan).FirstOrDefault();
+
+                Console.WriteLine(max_plan_program!.name_program);
+            }
+        }
+
+        // Запрос 6
+        public static void query6()
+        {
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                Console.WriteLine($"Дополнительные баллы для каждого абитуриента:\n");
+
+                var additional_scores = from e in db.enrollee.ToList()
+                    select new {e.name_enrollee, additional_score = e.achievements.Sum(x => x.achievement!.bonus)};
+
+                foreach (var item in additional_scores)
+                {
+                    Console.WriteLine($"Абитуриент: {item.name_enrollee}\t Дополнительные баллы: {item.additional_score}");
+                }
+            }            
+        }
+
+        // Запрос 7
+        public static void query7()
+        {
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                Console.WriteLine($"Конкурс для каждой образовательной программы:\n");
+
+                var program_comp = from p in db.program.ToList()
+                    select new {p.name_program, p.enrollees};
+
+                foreach (var item in program_comp)
+                {
+                    Console.WriteLine($"Программа обучения: {item.name_program}");
+                    
+                    foreach (var enrollee in item.enrollees)
+                    {
+                        Console.WriteLine($"{enrollee.enrollee!.name_enrollee}: {enrollee.enrollee!.achievements.Sum(x => x.achievement!.bonus) + enrollee.enrollee!.subjects.Sum(x => x.result)}");
+                    }
+
+                    Console.Write('\n');
+                }
+            }            
+        }
+
+        // Запрос 8
+        public static void query8(string subject1 = "Английский язык", string subject2 = "Математика")
+        {
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                Console.WriteLine($"Образовательные программы, для поступления на которые требуются следующие предметы: {subject1}, {subject2}:\n");
+
+                var program_statistics = from p in db.program.ToList()
+                    where p.subjects.Any(x => x.subject!.name_subject == subject1) && p.subjects.Any(x => x.subject!.name_subject == subject2)
+                    select new {p.name_program, p.subjects};
+
+                foreach (var item in program_statistics)
+                {
+                    Console.WriteLine($"Название программы: {item.name_program};\nСписок предметов:");
+
+                    foreach (var subject in item.subjects)
+                    {
+                        Console.WriteLine(subject.subject!.name_subject);
+                    }
+                }
+            }
+        }
+
+        // Запрос 9
+        public static void query9()
+        {
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                Console.WriteLine("Количество баллов каждого студента для каждой учебной программы");
+
+                var student_scores = 
+                    from s in db.enrollee.ToList()
+                    from p in db.program.ToList()
+                    select new {s.name_enrollee, p.name_program, enrollee_score = s.subjects.Where(x => p.subjects.Any(y => x.subject!.subject_id == y.subject!.subject_id)).Sum(x => x.result)};
+
+                foreach (var item in student_scores)
+                {
+                    Console.WriteLine($"{item.name_enrollee}, {item.name_program}, {item.enrollee_score}");
+                }
+            }
+        }
+
+        // Запрос 10
+        public static void query10()
+        {
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                Console.WriteLine("Студенты, которые не могут быть зачисленны на выбранную образовательную программу");
+
+                var bad_enrollees = 
+                    from e in db.program_enrollee.ToList()
+                    where e.enrollee!.subjects.Where(x => e.program!.subjects.Any(y => x.subject!.subject_id == y.subject!.subject_id)).Sum(x => x.result) < e.program!.subjects.Sum(x => x.min_result)
+                    select new {e.enrollee!.name_enrollee};
+
+                foreach (var item in bad_enrollees)
+                {
+                    Console.WriteLine(item.name_enrollee);
+                }
+            }
+        }
+
         static void Main(string[] args)
         {
             // Инициализация БД
             // fillDatabase();
 
             // Запросы
+            // Аномалии при выводе данных могут возникнуть из-за не совсем корректных данных в БД
             // query1();
             // query2();
+            // query3();
+            // query4();
+            // query5();
+            // query6();
+            // query7();
+            // query8();
+            // query9();
+            // query10();
         }
     }
 }

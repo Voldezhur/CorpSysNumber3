@@ -33,3 +33,4 @@
 /home/voldezhur/Desktop/Универ/Корпоратив/Семестр 2/Практика 3/practice3/obj/Debug/net8.0/practice3.pdb
 /home/voldezhur/Desktop/Универ/Корпоратив/Семестр 2/Практика 3/practice3/obj/Debug/net8.0/practice3.genruntimeconfig.cache
 /home/voldezhur/Desktop/Универ/Корпоратив/Семестр 2/Практика 3/practice3/obj/Debug/net8.0/ref/practice3.dll
+/home/voldezhur/Desktop/Универ/Корпоратив/Семестр 2/Практика 3/practice3/obj/Debug/net8.0/practice3.sourcelink.json
